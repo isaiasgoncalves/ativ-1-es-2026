@@ -4,6 +4,8 @@
 >  - Isaías Gouvêa Gonçalves
 >  - Mateus Mourão
 
+> Organização da dupla: [DIVISAO_DE_TAREFAS.md](DIVISAO_DE_TAREFAS.md)
+
 ---
 
 ## Enunciado
