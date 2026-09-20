@@ -1,7 +1,9 @@
 # Divisão de tarefas
 
-**Atividade:** Design Patterns em Python - Sistema de pedidos  
-**Dupla:** Isaías Gouvêa Gonçalves e Mateus Mourão  
+**Atividade:** Design Patterns em Python - Sistema de pedidos
+
+**Dupla:** Isaías Gouvêa Gonçalves e Mateus Mourão
+
 **Prazo:** 23/09/2026, às 23h59
 
 ## Princípio da divisão
