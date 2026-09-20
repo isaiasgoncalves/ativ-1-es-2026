@@ -1,5 +1,7 @@
 # Divisão de tarefas
 
+> Arquivo feito com ajuda de Inteligência Artificial para auxiliar na organização da dupla
+
 **Atividade:** Design Patterns em Python - Sistema de pedidos
 
 **Dupla:** Isaías Gouvêa Gonçalves e Mateus Mourão
