@@ -1,11 +1,6 @@
 """Testes de integração de OrderService -- questão 6.
 
-Order e PaymentProcessor reais (Isaías) ainda não estão integrados, então
-usamos aqui dublês mínimos que respeitam os contratos combinados
-(Order.total(), PaymentProcessor.process_order(order)) só para exercitar a
-coordenação feita por OrderService de forma isolada. Quando Order e os
-processadores de pagamento reais estiverem prontos, estes dublês podem ser
-trocados pelas classes de verdade sem mudar OrderService.
+TODO: Substituir _FakePaymentProcessor pela classe implementada pelo Isaías
 """
 
 import unittest
@@ -15,15 +10,8 @@ from src.channels import MobileFactory, WebFactory
 from src.event_logger import EventLogger
 from src.kiosk_channel import KioskFactory
 from src.order_service import OrderService
-
-
-class _FakeOrder:
-    def __init__(self, customer, total):
-        self.customer = customer
-        self._total = total
-
-    def total(self):
-        return self._total
+from src.order_service import OrderService
+from src.order import Order, OrderBuilder, Product
 
 
 class _FakePaymentProcessor:
@@ -42,7 +30,12 @@ class TestIntegracaoOrderService(unittest.TestCase):
         register_factory("KIOSK", KioskFactory())
 
     def test_fluxo_completo_canal_web(self):
-        order = _FakeOrder("Carla", 120.0)
+        order = (OrderBuilder()
+            .set_customer("Carla")
+            .set_products([
+                Product("Produto A", 120.0)
+                ])
+            .build())
         payment_processor = _FakePaymentProcessor()
         logger = EventLogger()
         service = OrderService(payment_processor, get_channel_factory("WEB"), logger)
@@ -55,7 +48,12 @@ class TestIntegracaoOrderService(unittest.TestCase):
         self.assertEqual(len(logger.events), 3)
 
     def test_fluxo_completo_canal_kiosk_sem_alterar_order_service(self):
-        order = _FakeOrder("Diego", 75.0)
+        order = (OrderBuilder()
+            .set_customer("Diego")
+            .set_products([
+                Product("Produto B", 75.0)
+                ])
+            .build())
         payment_processor = _FakePaymentProcessor()
         service = OrderService(payment_processor, get_channel_factory("KIOSK"))
 
@@ -69,7 +67,12 @@ class TestIntegracaoOrderService(unittest.TestCase):
         """OrderService não decide qual mecanismo de pagamento usar: só
         chama o PaymentProcessor injetado."""
 
-        order = _FakeOrder("Erika", 10.0)
+        order = (OrderBuilder()
+            .set_customer("Erika")
+            .set_products([
+                Product("Produto C", 10.0)
+                ])
+            .build())
         payment_processor = _FakePaymentProcessor()
         service = OrderService(payment_processor, get_channel_factory("MOBILE"))
 

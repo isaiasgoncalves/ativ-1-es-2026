@@ -10,15 +10,8 @@ from src.channels import (
     WebFactory,
     WebNotification,
 )
-
-
-class _FakeOrder:
-    def __init__(self, customer, total):
-        self.customer = customer
-        self._total = total
-
-    def total(self):
-        return self._total
+from src.order_service import OrderService
+from src.order import Order, OrderBuilder, Product
 
 
 class TestWebFactory(unittest.TestCase):
@@ -30,7 +23,13 @@ class TestWebFactory(unittest.TestCase):
 
     def test_checkout_web_menciona_cliente_e_total(self):
         checkout = WebCheckout()
-        order = _FakeOrder("Ana", 100.0)
+        order = (OrderBuilder()
+            .set_customer("Ana")
+            .set_products([
+                Product("Produto A", 70.0),
+                Product("Produto B", 30.0)
+                ])
+            .build())
 
         message = checkout.show(order)
 
@@ -47,7 +46,12 @@ class TestMobileFactory(unittest.TestCase):
 
     def test_notificacao_mobile_menciona_cliente(self):
         notification = MobileNotification()
-        order = _FakeOrder("Beto", 50.0)
+        order = (OrderBuilder()
+            .set_customer("Beto")
+            .set_products([
+                Product("Produto C", 50.0)
+                ])
+            .build())
 
         message = notification.send(order)
 

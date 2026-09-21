@@ -5,10 +5,7 @@ isso que adicionar KIOSK (questão 5) só exige criar src/kiosk_channel.py e
 somar duas linhas neste arquivo, sem tocar em channel_registry.py,
 channels.py nem order_service.py.
 
-_DemoOrder e _DemoPaymentProcessor são substitutos mínimos para Order/
-OrderBuilder e PaymentProcessor (parte do Isaías). Quando esses componentes
-estiverem prontos, troque as duas classes abaixo pelos reais e o restante
-do fluxo (OrderService, ChannelFactory, EventLogger) não muda.
+TODO: trocar _DemoPaymentProcessor pela classe implementada pelo Isaías, que deve ser injetada em OrderService.
 """
 
 from src.app_config import AppConfig
