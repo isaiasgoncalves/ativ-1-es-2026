@@ -17,21 +17,13 @@ from src.channels import MobileFactory, WebFactory
 from src.event_logger import EventLogger
 from src.kiosk_channel import KioskFactory
 from src.order_service import OrderService
+from src.order import Order, OrderBuilder, Product
 
 
 def bootstrap():
     register_factory("WEB", WebFactory())
     register_factory("MOBILE", MobileFactory())
     register_factory("KIOSK", KioskFactory())
-
-
-class _DemoOrder:
-    def __init__(self, customer, items):
-        self.customer = customer
-        self._items = items
-
-    def total(self):
-        return sum(price for _, price in self._items)
 
 
 class _DemoPaymentProcessor:
@@ -43,7 +35,14 @@ def run_flow(channel):
     config = AppConfig()
     print(f"-- Canal {channel} (ambiente: {config.environment}, moeda: {config.currency}) --")
 
-    order = _DemoOrder("Cliente Demo", [("Produto A", 50.0), ("Produto B", 30.0)])
+    order = (OrderBuilder()
+             .set_customer("Cliente Demo")
+             .set_products([
+                 Product("Produto A", 50.0),
+                 Product("Produto B", 30.0)
+                 ])
+             .build())
+
     channel_factory = get_channel_factory(channel)
     payment_processor = _DemoPaymentProcessor()
     logger = EventLogger()

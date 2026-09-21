@@ -45,7 +45,7 @@ Uma possível consequência é o acoplamento, que se dá quando diversos arquivo
 
 ### 1. Identifique quais componentes da sua implementação correspondem ao Builder e ao objeto construído.
 
-A classe `OrderBuilder` corresponde ao Builder. Ela mantém temporariamente os dados usados na construção, como cliente, produtos, endereço, cupom, forma de pagamento e observação. Seus métodos `set_client()`, `add_product()`, `set_address()`, `set_coupon()`, `set_payment_method()` e `set_obs()` representam as etapas de configuração e retornam o próprio Builder para permitir encadeamento.
+A classe `OrderBuilder` corresponde ao Builder. Ela mantém temporariamente os dados usados na construção, como cliente, produtos, endereço, cupom, forma de pagamento e observação. Seus métodos `set_customer()`, `add_product()`, `set_address()`, `set_coupon()`, `set_payment_method()` e `set_obs()` representam as etapas de configuração e retornam o próprio Builder para permitir encadeamento.
 O método `build()` encerra o processo de construção. Ele verifica se o cliente obrigatório foi informado e cria uma instância de `Order`.
 A classe `Order` corresponde ao objeto construído. Ela representa o pedido final e contém seus dados e comportamentos, como o método `total()`. A classe Product representa os produtos que compõem o pedido, mas não é o produto final do padrão Builder neste caso.
 
@@ -55,7 +55,7 @@ Seria possível construir o pedido diretamente porque o construtor de Order já 
 
 ```python
 order = Order(
-    client="Luis Bueno",
+    customer="Luis Bueno",
     products=[keyboard, mouse],
     address="Rua Exemplo, 42",
     coupon="DESCONTO10",

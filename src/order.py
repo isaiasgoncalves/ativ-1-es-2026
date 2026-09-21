@@ -32,14 +32,14 @@ class Product:
 
 class Order:
     def __init__(self,
-                 client: str,
+                 customer: str,
                  products: list[Product] | None = None,
                  address: str | None = None,
                  coupon: str | None = None,
                  payment_method: str | None = None,
                  obs: str | None = None):
         
-        self.client = client
+        self.customer = customer
         self.products = list(products) if products is not None else []
         self.address = address
         self.coupon = coupon
@@ -61,7 +61,7 @@ class Order:
             "=" * width,
             "PEDIDO".center(width),
             "=" * width,
-            f"Cliente:  {self.client}",
+            f"Cliente:  {self.customer}",
             f"Endereço: {self.address or '[Não informado]'}",
             "-" * width,
             (
@@ -97,15 +97,15 @@ class Order:
 
 class OrderBuilder:
     def __init__(self):
-        self.client = None
+        self.customer = None
         self.products = []
         self.address = None
         self.coupon = None
         self.payment_method = None
         self.obs = None
         
-    def set_client(self, client: str):
-        self.client = client
+    def set_customer(self, customer: str):
+        self.customer = customer
         return self
     
     def set_address(self, address: str):
@@ -137,11 +137,11 @@ class OrderBuilder:
     def build(self):
         """Verifica se foi definido um cliente, e gera o objeto Order com base nos parâmetros dados"""
         
-        if self.client is None:
+        if self.customer is None:
             raise ValueError("O pedido precisa ter um cliente para ser criado")
         
         return Order(
-            client=self.client,
+            customer=self.customer,
             products=self.products.copy(), # Caso reutilizemos a lista de produtos de novo
             address=self.address,
             coupon=self.coupon,
@@ -154,7 +154,7 @@ if __name__ == "__main__":
     """Testando"""
     
     order = (OrderBuilder()
-             .set_client("Luis Bueno")
+             .set_customer("Luis Bueno")
              .set_address("Rua Bambina 67, Botafogo")
              .set_payment_method("pix")
              .add_product(Product("Engenharia de IA - Chip Huyen", 129.99))

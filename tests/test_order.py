@@ -12,14 +12,14 @@ class TestOrderBuilder(unittest.TestCase):
     def test_construcao_com_dois_produtos(self):
         order = (
             OrderBuilder()
-            .set_client("Luis Bueno")
+            .set_customer("Luis Bueno")
             .add_product(self.keyboard)
             .add_product(self.mouse)
             .build()
         )
         
         self.assertIsInstance(order, Order)
-        self.assertEqual(order.client, "Luis Bueno")
+        self.assertEqual(order.customer, "Luis Bueno")
         self.assertEqual(len(order.products), 2)
         self.assertIn(self.keyboard, order.products)
         self.assertIn(self.mouse, order.products)
@@ -28,7 +28,7 @@ class TestOrderBuilder(unittest.TestCase):
     def test_construcao_com_atributos_opcionais(self):
         order = (
             OrderBuilder()
-            .set_client("Luis Bueno")
+            .set_customer("Luis Bueno")
             .set_address("Rua Exemplo, 42")
             .set_coupon("DESCONTO10")
             .set_payment_method("pix")
@@ -51,7 +51,7 @@ class TestOrderBuilder(unittest.TestCase):
     def test_pedido_construido_nao_muda_ao_reutilizar_builder(self):
         builder = (
             OrderBuilder()
-            .set_client("Luis Bueno")
+            .set_customer("Luis Bueno")
             .add_product(self.keyboard)
         )
 
