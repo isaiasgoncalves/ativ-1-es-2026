@@ -73,15 +73,15 @@ _Resposta:_
 
 ### 1. Explique por que checkout e notificação podem ser considerados uma família de produtos.
 
-_Resposta:_
+`Checkout` e `Notification` são duas variações que sempre aparecem juntas e precisam ser coerentes entre si: um pedido feito pelo canal WEB deve receber um `WebCheckout` e uma `WebNotification`; um pedido pelo MOBILE deve receber `MobileCheckout` e `MobileNotification`. Não faz sentido misturar, por exemplo, um checkout WEB com uma notificação MOBILE. Como esses objetos são criados aos pares, de forma consistente, e compartilham a mesma "variante" (o canal), eles formam uma família de produtos relacionados -- exatamente o que a Abstract Factory (`ChannelFactory`) foi feita para produzir.
 
 ### 2. Explique qual problema a Abstract Factory resolve nessa situação.
 
-_Resposta:_
+Sem a Abstract Factory, o código que monta o fluxo do pedido precisaria de lógica condicional (`if channel == "WEB": ... elif channel == "MOBILE": ...`) espalhada em vários pontos para escolher tanto o checkout quanto a notificação certos, correndo o risco de, em algum lugar, combinar classes de canais diferentes por engano. A `ChannelFactory` resolve isso concentrando em um único objeto (`WebFactory`, `MobileFactory`, ...) a responsabilidade de criar toda a família compatível de um canal. Quem usa a fábrica só chama `create_checkout()` e `create_notification()` sem saber qual canal está por trás, e a garantia de que os dois objetos pertencem ao mesmo canal fica embutida na própria fábrica.
 
 ### 3. Explique por que o pagamento não deve fazer parte da fábrica responsável pelo canal.
 
-_Resposta:_
+Canal de venda e forma de pagamento são escolhas independentes (WEB pode usar PIX, MOBILE pode usar cartão, e vice-versa). Se `ChannelFactory` também criasse o `Payment`, canal e forma de pagamento ficariam acoplados -- não seria possível combinar livremente um canal com qualquer forma de pagamento, e adicionar uma nova forma de pagamento exigiria mexer em todas as fábricas de canal. Ao manter o pagamento fora da `ChannelFactory` e resolvido por um `PaymentProcessor` separado (Factory Method da questão 3), as duas dimensões variam de forma independente, cada uma com sua própria responsabilidade (SRP).
 
 ---
 
@@ -89,11 +89,15 @@ _Resposta:_
 
 ### 1. Liste os arquivos criados ou alterados para adicionar KIOSK.
 
-_Resposta:_
+**Criado:** `src/kiosk_channel.py` (com `KioskCheckout`, `KioskNotification` e `KioskFactory`, implementando as mesmas abstrações de `src/channels.py`).
+
+**Alterado:** `main.py`, só na inicialização (`bootstrap()`), acrescentando o import de `KioskFactory` e a chamada `register_factory("KIOSK", KioskFactory())`.
+
+**Não alterados:** `src/channel_registry.py` (o `get_channel_factory` e o mecanismo de registro continuam exatamente os mesmos), `src/channels.py` e `src/order_service.py` (o código que consome `Checkout`/`Notification` através das abstrações não precisou saber que KIOSK existe).
 
 ### 2. Explique por que as alterações realizadas são ou não compatíveis com o princípio OCP.
 
-_Resposta:_
+São compatíveis com o OCP. O módulo de registro (`channel_registry.py`) está fechado para modificação: `get_channel_factory` não teve nenhuma linha alterada e continua funcionando para qualquer canal que já esteja no dicionário `_factories`, seja WEB, MOBILE ou KIOSK. Ao mesmo tempo, o sistema está aberto para extensão: para suportar um canal novo bastou criar um arquivo novo que implementa as interfaces já existentes (`ChannelFactory`, `Checkout`, `Notification`) e registrá-lo. A única mudança em código já existente foi em `main.py`, que é a raiz de composição da aplicação (o lugar cuja função é justamente "ligar" os componentes); nenhuma classe que participa da lógica de negócio (`OrderService`, `channel_registry.py`, `channels.py`) precisou ser reaberta ou reescrita.
 
 ---
 
@@ -101,17 +105,38 @@ _Resposta:_
 
 As respostas desta seção devem considerar a implementação efetivamente entregue pela dupla.
 
+A primeira versão de `OrderService` misturava cinco responsabilidades (`create_order`, `calculate_total`, `create_payment`, `send_notification`, `save_log`). Elas foram redistribuídas assim:
+
+* `create_order` -> `OrderBuilder` (constrói o pedido);
+* `calculate_total` -> `Order.total()` (o próprio pedido sabe somar seus itens);
+* `create_payment` -> `PaymentProcessor.create_payment()` de cada processador concreto (Factory Method, questão 3);
+* `send_notification` -> `Notification.send(order)`, obtida de uma `ChannelFactory` (Abstract Factory, questão 4);
+* `save_log` -> `EventLogger`, um componente próprio dedicado só a registrar o que aconteceu no fluxo.
+
+O `OrderService` que sobrou só coordena: recebe por injeção um `PaymentProcessor` e uma `ChannelFactory` já prontos e chama, em sequência, `checkout.show(order)`, `payment_processor.process_order(order)`, `notification.send(order)` e (se houver) `logger.log(...)`. Ele não constrói o pedido, não decide qual classe concreta de pagamento ou notificação usar, e não guarda a configuração global -- essas decisões são tomadas antes, na inicialização da aplicação (`main.py`), que registra as fábricas de canal e escolhe o `PaymentProcessor` a usar.
+
 ### 1. Qual é a responsabilidade principal de cada componente criado?
 
-_Resposta:_
+* `AppConfig`: manter a configuração compartilhada da aplicação (Singleton).
+* `Order` / `OrderBuilder`: representar e construir um pedido válido.
+* `Payment` / `PixPayment` / `CreditCardPayment` / `BoletoPayment`: efetuar o pagamento de uma forma específica.
+* `PaymentProcessor` (e subclasses `PixProcessor`, `CreditCardProcessor`, `BoletoProcessor`): definir o fluxo comum de processamento de pagamento e delegar a criação do `Payment` concreto ao Factory Method.
+* `Checkout` / `Notification`: apresentar o checkout e enviar a notificação de um canal específico.
+* `ChannelFactory` (`WebFactory`, `MobileFactory`, `KioskFactory`): criar a família coerente de `Checkout` e `Notification` de um canal (Abstract Factory).
+* `channel_registry` (`register_factory` / `get_channel_factory`): saber, em tempo de execução, qual `ChannelFactory` corresponde a um canal, sem que quem consulta precise conhecer as classes concretas.
+* `EventLogger`: registrar os eventos ocorridos durante o processamento de um pedido.
+* `OrderService`: coordenar o fluxo completo chamando os colaboradores acima, na ordem certa, sem tomar decisões que pertencem a eles.
+* `main.py`: raiz de composição -- registra as fábricas de canal, escolhe o `PaymentProcessor` e dispara o fluxo.
 
 ### 2. Escolha três componentes diferentes e indique uma mudança que deveria ficar restrita a cada um deles.
 
-_Resposta:_
+* `WebCheckout`/`WebNotification`: mudar o texto ou o layout apresentado ao cliente no canal WEB (ex.: incluir um novo campo no checkout) deveria alterar só essas duas classes, sem afetar MOBILE, KIOSK ou o `OrderService`.
+* `channel_registry.py`: mudar a forma como as fábricas são armazenadas internamente (por exemplo, trocar o dicionário por outra estrutura, ou passar a validar duplicidade de registro) deveria ficar restrito a este arquivo -- quem chama `get_channel_factory(channel)` não percebe a diferença.
+* `EventLogger`: mudar o destino dos logs (por exemplo, gravar em arquivo em vez de manter em memória, ou mudar o formato do timestamp) deveria ficar restrito a essa classe; `OrderService` continua só chamando `logger.log(mensagem)`.
 
 ### 3. Identifique uma decisão de projeto da solução que poderia ser diferente. Explique qual seria a alternativa e qual seria a consequência dessa mudança.
 
-_Resposta:_
+Optamos por registrar as fábricas de canal (`register_factory`) explicitamente em `main.py`, na inicialização da aplicação. Uma alternativa seria fazer cada módulo de canal se auto-registrar como efeito colateral da importação (por exemplo, `src/channels.py` chamar `register_factory("WEB", WebFactory())` no fim do próprio arquivo, e `src/kiosk_channel.py` fazer o mesmo para KIOSK). Nesse caso, adicionar KIOSK exigiria zero alterações em `main.py` -- bastaria importar o novo módulo em algum ponto de inicialização. A consequência seria um acoplamento mais implícito: o registro de um canal passaria a depender de "alguém importar aquele módulo em algum lugar", o que é mais fácil de esquecer e mais difícil de rastrear do que ler as poucas linhas de `bootstrap()` em `main.py`. Preferimos a explicitação em `main.py` por deixar visível, em um único lugar, quais canais a aplicação suporta.
 
 ---
 
@@ -149,17 +174,19 @@ _Resposta:_
 
 ### Teste adicional de criação por Factory
 
+`tests/test_channels.py::TestComportamentoAdicionalDeFactory.test_fabrica_cria_uma_nova_instancia_a_cada_chamada`
+
 #### Comportamento verificado
 
-_Resposta:_
+Que duas chamadas sucessivas a `WebFactory.create_checkout()` devolvem duas instâncias distintas de `WebCheckout`, e não o mesmo objeto reaproveitado.
 
 #### Resultado esperado
 
-_Resposta:_
+`checkout_1 is not checkout_2` -- os dois objetos criados são instâncias diferentes.
 
 #### Por que esse comportamento é importante
 
-_Resposta:_
+O enunciado só pede para verificar que a fábrica cria o tipo certo de objeto para cada canal. Este teste cobre um comportamento diferente: garante que a fábrica realmente **fabrica** um objeto novo a cada chamada, em vez de cachear/reaproveitar uma instância (o que seria uma implementação de Factory incorreta, do tipo Singleton disfarçado). Isso importa porque pedidos processados em paralelo usam a mesma `ChannelFactory`; se ela devolvesse sempre o mesmo `Checkout`, um pedido poderia acabar enxergando ou até alterando estado de outro pedido através do mesmo objeto de checkout compartilhado.
 
 ---
 
