@@ -45,11 +45,27 @@ Uma possível consequência é o acoplamento, que se dá quando diversos arquivo
 
 ### 1. Identifique quais componentes da sua implementação correspondem ao Builder e ao objeto construído.
 
-_Resposta:_
+A classe `OrderBuilder` corresponde ao Builder. Ela mantém temporariamente os dados usados na construção, como cliente, produtos, endereço, cupom, forma de pagamento e observação. Seus métodos `set_client()`, `add_product()`, `set_address()`, `set_coupon()`, `set_payment_method()` e `set_obs()` representam as etapas de configuração e retornam o próprio Builder para permitir encadeamento.
+O método `build()` encerra o processo de construção. Ele verifica se o cliente obrigatório foi informado e cria uma instância de `Order`.
+A classe `Order` corresponde ao objeto construído. Ela representa o pedido final e contém seus dados e comportamentos, como o método `total()`. A classe Product representa os produtos que compõem o pedido, mas não é o produto final do padrão Builder neste caso.
 
 ### 2. Explique por que seria possível construir o pedido diretamente pelo construtor de `Order` e qual seria a diferença em relação à solução adotada.
 
-_Resposta:_
+Seria possível construir o pedido diretamente porque o construtor de Order já recebe todas as informações necessárias:
+
+```python
+order = Order(
+    client="Luis Bueno",
+    products=[keyboard, mouse],
+    address="Rua Exemplo, 42",
+    coupon="DESCONTO10",
+)
+```
+
+Em Python, os argumentos nomeados tornam essa construção relativamente clara, especialmente quando o objeto possui poucos campos e regras simples.
+Na solução adotada, `OrderBuilder` permite que o pedido seja configurado em etapas, usando uma interface encadeada. O Builder mantém o estado intermediário da construção, permite adicionar produtos individualmente e centraliza a validação de que um cliente foi informado antes de criar o pedido.
+Outra diferença é que o Builder copia a lista de produtos ao construir o Order. Dessa forma, reutilizar o mesmo Builder para criar outro pedido não modifica retroativamente um pedido já construído.
+A construção direta seria mais curta, mas colocaria sobre o código cliente a responsabilidade de preparar todos os argumentos e poderia contornar a validação realizada em `build()`. O Builder se torna mais vantajoso caso o processo de criação ganhe novas etapas ou regras.
 
 ---
 
