@@ -1,9 +1,6 @@
 """
 Definindo Produto, Pedido e Builder de Pedido.
 
-Chave: Produto e seu preço
-Valor: Quantidade daquele produto
-
 Notas do autor:
     *   Valores monetários estão sendo representados por float, mas é sabido que num ambiente
     real esse não seria o melhor formato.
