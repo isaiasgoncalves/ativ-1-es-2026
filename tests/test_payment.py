@@ -39,20 +39,20 @@ class TestPaymentProcessor(unittest.TestCase):
         mock_pay.assert_called_once_with(amount=5829.98)
         
     def test_processa_pedido_com_paypal(self):
-            order = (
-                OrderBuilder()
-                .set_customer("Pedro")
-                .set_payment_method("PayPal")
-                .add_product(Product("Fritadeira a Ar Mondial", 350.00))
-                .add_product(Product("Perfume Malbec", 99.90))
-                .build()
-            )
-    
-            with patch.object(PayPalPayment, "pay") as mock_pay:
-                PayPalProcessor().process_order(order)
-    
-            self.assertEqual(order.payment_method, "PayPal")
-            mock_pay.assert_called_once_with(amount=449.90)
+        order = (
+            OrderBuilder()
+            .set_customer("Pedro")
+            .set_payment_method("PayPal")
+            .add_product(Product("Fritadeira a Ar Mondial", 350.00))
+            .add_product(Product("Perfume Malbec", 99.90))
+            .build()
+        )
+
+        with patch.object(PayPalPayment, "pay") as mock_pay:
+            PayPalProcessor().process_order(order)
+
+        self.assertEqual(order.payment_method, "PayPal")
+        mock_pay.assert_called_once_with(amount=449.90)
         
         
         

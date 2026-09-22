@@ -222,22 +222,32 @@ O enunciado só pede para verificar que a fábrica cria o tipo certo de objeto p
 
 ### 1. Quais arquivos foram criados ou modificados?
 
-_Resposta:_
+Não foi necessário criar um novo arquivo. O arquivo `src/payment.py` foi modificado para incluir `PayPalPayment`, a nova implementação concreta de `Payment`, e `PayPalProcessor`, o novo Concrete Creator responsável por instanciá-la. 
+
+O arquivo `tests/test_payment.py` também foi modificado para acrescentar um teste que constrói um pedido com a forma de pagamento PayPal e verifica se `PayPalPayment.pay()` é chamado com o valor total correto.
 
 ### 2. O fluxo principal de processamento precisou ser alterado?
 
-_Resposta:_
+Não. O fluxo principal de processamento não precisou ser alterado. `PayPalProcessor` herda de `PaymentProcessor` o método `process_order()`, que já cria um pagamento por meio de `create_payment()` e chama `pay(order.total())`. Para suportar o PayPal, bastou implementar `create_payment()` na nova subclasse, retornando uma instância de `PayPalPayment`.
 
 ### 3. Quais classes existentes precisaram ser modificadas?
 
-_Resposta:_
+Nenhuma classe existente precisou ser modificada. Foram apenas adicionadas as classes `PayPalPayment` e `PayPalProcessor`. As abstrações `Payment` e `PaymentProcessor`, o método `process_order()` e as demais implementações concretas permaneceram inalterados.
 
 ### 4. Explique como o Factory Method contribuiu para essa extensão.
 
-_Resposta:_
+O Factory Method permitiu adicionar o PayPal sem alterar o fluxo geral de processamento. 
+
+`PaymentProcessor.process_order()` depende apenas do método `create_payment()` e da abstração Payment, cujo contrato define `pay(amount)`. O novo `PayPalProcessor` implementa `create_payment()` retornando um `PayPalPayment`, que respeita esse mesmo contrato. 
+
+Dessa forma, o fluxo pode utilizar a nova forma de pagamento sem conhecer sua classe concreta, enquanto a decisão sobre qual objeto criar permanece encapsulada no processor correspondente.
 
 ### 5. Compare essa alteração com a inclusão do canal KIOSK. Quais são as semelhanças e diferenças arquiteturais entre as duas extensões?
 
-_Resposta:_
+As duas extensões são semelhantes porque acrescentam novas classes concretas que respeitam abstrações já existentes, sem modificar o fluxo principal da aplicação. 
+
+Isso mantém o sistema aberto para extensão e evita alterações em componentes que já funcionavam. A diferença é que o PayPal estende o Factory Method de pagamento: foram adicionados um novo produto, `PayPalPayment`, e um novo creator, `PayPalProcessor`, responsável por criar um único tipo de objeto. Já o canal KIOSK estende a Abstract Factory: foi necessário criar uma nova família composta por `KioskCheckout` e `KioskNotification`, além de `KioskFactory`, que produz os dois objetos de forma coerente. 
+
+A fábrica do KIOSK também precisou ser adicionada ao registro de canais durante a inicialização da aplicação, enquanto o processor do PayPal é escolhido diretamente como colaborador do `OrderService`.
 
 ---
