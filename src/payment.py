@@ -45,5 +45,12 @@ class BoletoProcessor(PaymentProcessor):
         return BoletoPayment()
     
 
-    
-    
+# === Parte 8 - Adicionando uma nova forma de pagamento ===
+
+class PayPalPayment(Payment):
+    def pay(self, amount: float):
+        print(f"Pagamento via PayPal no valor de {amount:.2f}")
+        
+class PayPalProcessor(PaymentProcessor):
+    def create_payment(self):
+        return PayPalPayment()
