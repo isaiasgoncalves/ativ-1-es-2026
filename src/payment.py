@@ -1,3 +1,5 @@
+"""Classes de Pagamento -- Factory Method"""
+
 from abc import ABC, abstractmethod
 from .order import Order
 
