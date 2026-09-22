@@ -1,25 +1,15 @@
-"""Testes de integração de OrderService -- questão 6.
-
-TODO: Substituir _FakePaymentProcessor pela classe implementada pelo Isaías
-"""
+"""Testes de integração de OrderService -- questão 6."""
 
 import unittest
+from unittest.mock import patch
 
 from src.channel_registry import _factories, get_channel_factory, register_factory
 from src.channels import MobileFactory, WebFactory
 from src.event_logger import EventLogger
 from src.kiosk_channel import KioskFactory
 from src.order_service import OrderService
-from src.order_service import OrderService
-from src.order import Order, OrderBuilder, Product
-
-
-class _FakePaymentProcessor:
-    def __init__(self):
-        self.processed = []
-
-    def process_order(self, order):
-        self.processed.append(order)
+from src.order import OrderBuilder, Product
+from src.payment import PixPayment, PixProcessor
 
 
 class TestIntegracaoOrderService(unittest.TestCase):
@@ -35,16 +25,17 @@ class TestIntegracaoOrderService(unittest.TestCase):
             .set_products([
                 Product("Produto A", 120.0)
                 ])
+            .set_payment_method("PIX")
             .build())
-        payment_processor = _FakePaymentProcessor()
         logger = EventLogger()
-        service = OrderService(payment_processor, get_channel_factory("WEB"), logger)
+        service = OrderService(PixProcessor(), get_channel_factory("WEB"), logger)
 
-        checkout_message, notification_message = service.process_order(order)
+        with patch.object(PixPayment, "pay") as mock_pay:
+            checkout_message, notification_message = service.process_order(order)
 
         self.assertIn("Carla", checkout_message)
         self.assertIn("Carla", notification_message)
-        self.assertIn(order, payment_processor.processed)
+        mock_pay.assert_called_once_with(amount=120.0)
         self.assertEqual(len(logger.events), 3)
 
     def test_fluxo_completo_canal_kiosk_sem_alterar_order_service(self):
@@ -53,15 +44,16 @@ class TestIntegracaoOrderService(unittest.TestCase):
             .set_products([
                 Product("Produto B", 75.0)
                 ])
+            .set_payment_method("PIX")
             .build())
-        payment_processor = _FakePaymentProcessor()
-        service = OrderService(payment_processor, get_channel_factory("KIOSK"))
+        service = OrderService(PixProcessor(), get_channel_factory("KIOSK"))
 
-        checkout_message, notification_message = service.process_order(order)
+        with patch.object(PixPayment, "pay") as mock_pay:
+            checkout_message, notification_message = service.process_order(order)
 
         self.assertIn("Diego", checkout_message)
         self.assertIn("KIOSK", checkout_message)
-        self.assertIn(order, payment_processor.processed)
+        mock_pay.assert_called_once_with(amount=75.0)
 
     def test_order_service_apenas_delega_pagamento_ao_colaborador(self):
         """OrderService não decide qual mecanismo de pagamento usar: só
@@ -72,13 +64,15 @@ class TestIntegracaoOrderService(unittest.TestCase):
             .set_products([
                 Product("Produto C", 10.0)
                 ])
+            .set_payment_method("PIX")
             .build())
-        payment_processor = _FakePaymentProcessor()
+        payment_processor = PixProcessor()
         service = OrderService(payment_processor, get_channel_factory("MOBILE"))
 
-        service.process_order(order)
+        with patch.object(PixProcessor, "process_order") as mock_process_order:
+            service.process_order(order)
 
-        self.assertEqual(payment_processor.processed, [order])
+        mock_process_order.assert_called_once_with(order)
 
 
 if __name__ == "__main__":
