@@ -5,7 +5,6 @@ isso que adicionar KIOSK (questão 5) só exige criar src/kiosk_channel.py e
 somar duas linhas neste arquivo, sem tocar em channel_registry.py,
 channels.py nem order_service.py.
 
-TODO: trocar _DemoPaymentProcessor pela classe implementada pelo Isaías, que deve ser injetada em OrderService.
 """
 
 from src.app_config import AppConfig
@@ -14,7 +13,8 @@ from src.channels import MobileFactory, WebFactory
 from src.event_logger import EventLogger
 from src.kiosk_channel import KioskFactory
 from src.order_service import OrderService
-from src.order import Order, OrderBuilder, Product
+from src.order import OrderBuilder, Product
+from src.payment import PixProcessor
 
 
 def bootstrap():
@@ -23,25 +23,23 @@ def bootstrap():
     register_factory("KIOSK", KioskFactory())
 
 
-class _DemoPaymentProcessor:
-    def process_order(self, order):
-        print(f"Cobrando R$ {order.total():.2f} de {order.customer}.")
-
-
 def run_flow(channel):
     config = AppConfig()
     print(f"-- Canal {channel} (ambiente: {config.environment}, moeda: {config.currency}) --")
 
-    order = (OrderBuilder()
-             .set_customer("Cliente Demo")
-             .set_products([
-                 Product("Produto A", 50.0),
-                 Product("Produto B", 30.0)
-                 ])
-             .build())
+    order = (
+        OrderBuilder()
+        .set_customer("Cliente Demo")
+        .set_products([
+            Product("Produto A", 50.0),
+            Product("Produto B", 30.0)
+            ])
+        .set_payment_method("PIX")
+        .build()
+    )
 
     channel_factory = get_channel_factory(channel)
-    payment_processor = _DemoPaymentProcessor()
+    payment_processor = PixProcessor()
     logger = EventLogger()
 
     service = OrderService(payment_processor, channel_factory, logger)

@@ -73,15 +73,27 @@ A construção direta seria mais curta, mas colocaria sobre o código cliente a 
 
 ### 1. Identifique os papéis de Creator, Concrete Creator, Product e Concrete Product na implementação desenvolvida.
 
-_Resposta:_
+Na implementação, `PaymentProcessor` desempenha o papel de Creator, pois declara o Factory Method `create_payment()` e define em `process_order()` o fluxo comum de processamento. 
+
+`PixProcessor`, `CreditCardProcessor` e `BoletoProcessor` são os Concrete Creators, pois implementam `create_payment()` e decidem qual objeto de pagamento será criado. 
+
+A classe abstrata `Payment` representa o Product, estabelecendo o contrato `pay(amount)`. 
+
+Por fim, `PixPayment`, `CreditCardPayment` e `BoletoPayment` são os Concrete Products, pois implementam esse contrato para cada mecanismo de pagamento. Dessa forma, o fluxo definido em `PaymentProcessor` depende da abstração Payment, enquanto a escolha da implementação concreta fica a cargo de cada processor especializado.
 
 ### 2. Explique por que uma função contendo simplesmente uma sequência de `if/elif` escolhendo classes concretas não é, por si só, suficiente para caracterizar o padrão Factory Method.
 
-_Resposta:_
+Uma função com uma sequência de `if/elif` apenas centraliza a escolha e a instanciação das classes concretas, caracterizando uma Simple Factory, e não necessariamente o padrão Factory Method. 
+
+No Factory Method, a criação do produto é definida por um método que pode ser sobrescrito por subclasses. Em nossa implementação, `PaymentProcessor` mantém o fluxo comum em `process_order()`, enquanto `PixProcessor`, `CreditCardProcessor` e `BoletoProcessor` implementam `create_payment()` de forma polimórfica. Assim, cada subclasse decide qual `Payment` criar sem que o fluxo geral precise conhecer ou selecionar diretamente as classes concretas. 
+
+Em uma função baseada em `if/elif`, adicionar uma forma de pagamento normalmente exigiria alterar essa própria função e incluir outra condição.
 
 ### 3. Considere que uma nova forma de pagamento seja adicionada posteriormente. Explique quais partes da implementação precisariam ser alteradas.
 
-_Resposta:_
+Para adicionar uma nova forma de pagamento, bastaria criar uma nova implementação concreta de `Payment` e um novo `PaymentProcessor` que implemente `create_payment()` retornando esse pagamento. 
+
+Também seria necessário disponibilizar o novo processor na inicialização da aplicação. O fluxo comum de `PaymentProcessor.process_order()` e as classes de pagamento existentes não precisariam ser modificados.
 
 ---
 

@@ -1,13 +1,6 @@
 """
 Definindo Produto, Pedido e Builder de Pedido.
 
-Note que a lista de produtos está estruturada como um dicionário
-ex.:
-
-products = {
-    Product("Nescau Lata 500g", 17.99): 2
-}
-
 Chave: Produto e seu preço
 Valor: Quantidade daquele produto
 
