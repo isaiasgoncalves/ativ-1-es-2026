@@ -1,4 +1,4 @@
-# Respostas da Atividade Avaliativa - Engenharia de Sofware
+# Respostas da Atividade Avaliativa - Engenharia de Software
 
 > Alunos:
 >  - Isaías Gouvêa Gonçalves
@@ -6,28 +6,31 @@
 
 ---
 
+## Estrutura da solução
+
+A solução foi dividida em módulos de acordo com a responsabilidade de cada componente. O diretório `src/` contém o código da aplicação: `app_config.py` concentra a configuração compartilhada; `order.py` reúne o pedido, os produtos e o Builder; `payment.py` contém a hierarquia de pagamentos e o Factory Method; `channels.py` define as famílias WEB e MOBILE; `kiosk_channel.py` acrescenta a família KIOSK; `channel_registry.py` mantém o registro de fábricas; `order_service.py` coordena o fluxo; e `event_logger.py` registra os eventos.
+
+O diretório `tests/` contém os testes separados por componente e os testes de integração. O arquivo `main.py` funciona como raiz de composição e exemplo executável: configura as fábricas, constrói um pedido e executa o fluxo completo nos canais WEB e KIOSK. Essa organização mantém as responsabilidades separadas e permite alterar ou estender um componente sem concentrar toda a aplicação em um único módulo.
+
+---
+
 ## 1 - Config (Singleton)
 
 ### 1. Explique por que utilizar `__new__` não impede, por si só, novas execuções de `__init__`.
 
-Sempre que `AppConfig()` é invocado, é executado `__new__` que irá retornar a instância, e logo em seguida será executado o `__init__` que inicializa o objeto independente se a instância retornada era a mesma que a anterior. Então se `__init__` define atributos do objeto, sempre que a classe for invocada, `__init__` será executado novamente e os atributos serão reiniciados.
+Sempre que `AppConfig()` é invocado, `__new__` determina qual instância será retornada. Se o objeto retornado for uma instância da classe, o protocolo normal de construção ainda chama `__init__`, mesmo que `__new__` tenha devolvido um objeto já existente. Portanto, usar apenas `__new__` para controlar a identidade não impede que um eventual `__init__` seja executado novamente e restaure atributos. Em nossa implementação, os valores iniciais são definidos somente dentro da condição que cria a primeira instância.
 
 ### 2. Explique como um módulo Python poderia ser utilizado para compartilhar uma configuração sem implementar uma segunda versão do Singleton.
 
-Uma possibilidade viável seria basicamente criar um arquivo (módulo) `config.py` que armazena variáveis com os valores de configuração:
+Uma alternativa seria criar um módulo `config.py` que armazenasse diretamente os valores compartilhados:
 
 ```python
-environment = "production"
-currency = "BRL"
-debug = False
-
-# Constantes (configurações fixas costumam a ser nomeadas com Caps)
-
 ENVIRONMENT = "production"
 CURRENCY = "BRL"
 DEBUG = False
 ```
-Quando as configurações forem utilizadas, basta importar o módulo no arquivo:
+
+Quando as configurações fossem utilizadas, bastaria importar o módulo:
 
 ```python
 import config
@@ -35,9 +38,11 @@ import config
 print(f"Moeda utilizada: {config.CURRENCY}") # BRL
 ```
 
+Como os módulos são carregados uma vez e mantidos no cache de importações de Python, todos os arquivos que importassem `config` acessariam o mesmo objeto de módulo e, consequentemente, os mesmos valores. Assim, o próprio mecanismo de módulos forneceria o compartilhamento, sem implementar outra classe Singleton.
+
 ### 3. Identifique uma possível consequência de possuir um objeto de configuração global compartilhado.
 
-Uma possível consequência é o acoplamento, que se dá quando diversos arquivos idependentes acessam uma mesma instância de um objeto na memória -- em que qualquer componente pode acabar editando e alterando uma configuração e gerando comportamentos inesperados no resto do código. Como exemplo disso, é necessário reiniciar a instância de `AppConfig` a cada teste com `AppConfig._instance = None`.
+Uma possível consequência é o acoplamento entre componentes independentes que acessam o mesmo estado global. Qualquer componente pode alterar uma configuração e produzir efeitos inesperados no restante da aplicação. Os testes também podem interferir uns nos outros; por isso, a suíte redefine `AppConfig._instance` no `setUp()` para começar cada teste com uma configuração conhecida.
 
 ---
 
@@ -146,9 +151,10 @@ O `OrderService` que sobrou só coordena: recebe por injeção um `PaymentProces
 ### 1. Qual é a responsabilidade principal de cada componente criado?
 
 * `AppConfig`: manter a configuração compartilhada da aplicação (Singleton).
+* `Product`: representar um item com nome e preço.
 * `Order` / `OrderBuilder`: representar e construir um pedido válido.
-* `Payment` / `PixPayment` / `CreditCardPayment` / `BoletoPayment`: efetuar o pagamento de uma forma específica.
-* `PaymentProcessor` (e subclasses `PixProcessor`, `CreditCardProcessor`, `BoletoProcessor`): definir o fluxo comum de processamento de pagamento e delegar a criação do `Payment` concreto ao Factory Method.
+* `Payment` / `PixPayment` / `CreditCardPayment` / `BoletoPayment` / `PayPalPayment`: definir e executar uma forma específica de pagamento.
+* `PaymentProcessor` (e subclasses `PixProcessor`, `CreditCardProcessor`, `BoletoProcessor`, `PayPalProcessor`): definir o fluxo comum de processamento de pagamento e delegar a criação do `Payment` concreto ao Factory Method.
 * `Checkout` / `Notification`: apresentar o checkout e enviar a notificação de um canal específico.
 * `ChannelFactory` (`WebFactory`, `MobileFactory`, `KioskFactory`): criar a família coerente de `Checkout` e `Notification` de um canal (Abstract Factory).
 * `channel_registry` (`register_factory` / `get_channel_factory`): saber, em tempo de execução, qual `ChannelFactory` corresponde a um canal, sem que quem consulta precise conhecer as classes concretas.
@@ -174,35 +180,39 @@ Para cada teste, informe o comportamento verificado, o resultado esperado e por 
 
 ### Teste adicional de Singleton
 
+Arquivo `tests/test_app_config.py`, método `test_valores_iniciais`.
+
 #### Comportamento verificado
 
-_Resposta:_
+O teste verifica se a primeira obtenção de `AppConfig` cria a configuração com os valores padrão definidos para a aplicação: ambiente `"production"`, moeda `"BRL"` e modo de depuração desativado.
 
 #### Resultado esperado
 
-_Resposta:_
+Espera-se que `config.environment` seja `"production"`, `config.currency` seja `"BRL"` e `config.debug` seja `False`.
 
 #### Por que esse comportamento é importante
 
-_Resposta:_
+Esse comportamento garante que o único objeto compartilhado comece em um estado válido e previsível. Como todas as partes da aplicação utilizam a mesma instância, um valor inicial incorreto seria propagado para todos os componentes. O teste é adicional porque os exemplos obrigatórios se concentram na identidade e no compartilhamento da instância, enquanto este verifica seu estado inicial.
 
 ### Teste adicional de Builder
 
+Arquivo `tests/test_order.py`, método `test_pedido_construido_nao_muda_ao_reutilizar_builder`.
+
 #### Comportamento verificado
 
-_Resposta:_
+O teste verifica se um pedido já construído permanece inalterado quando o mesmo `OrderBuilder` é reutilizado e recebe um novo produto antes de construir outro pedido.
 
 #### Resultado esperado
 
-_Resposta:_
+Espera-se que o primeiro pedido continue com apenas um produto e que o segundo possua dois. O produto acrescentado depois da primeira chamada a `build()` não deve aparecer retroativamente no primeiro pedido.
 
 #### Por que esse comportamento é importante
 
-_Resposta:_
+Esse comportamento é importante porque o Builder mantém uma lista mutável durante a construção. A cópia realizada por `build()` impede que pedidos diferentes compartilhem acidentalmente a mesma lista e evita alterações retroativas em objetos já entregues ao restante do sistema.
 
 ### Teste adicional de criação por Factory
 
-`tests/test_channels.py::TestComportamentoAdicionalDeFactory.test_fabrica_cria_uma_nova_instancia_a_cada_chamada`
+Arquivo `tests/test_channels.py`, método `test_fabrica_cria_uma_nova_instancia_a_cada_chamada`.
 
 #### Comportamento verificado
 
@@ -214,7 +224,7 @@ Que duas chamadas sucessivas a `WebFactory.create_checkout()` devolvem duas inst
 
 #### Por que esse comportamento é importante
 
-O enunciado só pede para verificar que a fábrica cria o tipo certo de objeto para cada canal. Este teste cobre um comportamento diferente: garante que a fábrica realmente **fabrica** um objeto novo a cada chamada, em vez de cachear/reaproveitar uma instância (o que seria uma implementação de Factory incorreta, do tipo Singleton disfarçado). Isso importa porque pedidos processados em paralelo usam a mesma `ChannelFactory`; se ela devolvesse sempre o mesmo `Checkout`, um pedido poderia acabar enxergando ou até alterando estado de outro pedido através do mesmo objeto de checkout compartilhado.
+O enunciado só pede para verificar que a fábrica cria o tipo certo de objeto para cada canal. Este teste cobre um comportamento diferente: confirma a decisão de projeto de produzir um novo checkout a cada chamada, em vez de reutilizar uma instância. Isso importa porque pedidos processados em paralelo usam a mesma `ChannelFactory`; se ela devolvesse sempre o mesmo `Checkout`, uma futura inclusão de estado nessa classe poderia fazer pedidos diferentes compartilharem dados acidentalmente.
 
 ---
 

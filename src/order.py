@@ -1,9 +1,7 @@
-"""
-Definindo Produto, Pedido e Builder de Pedido.
+"""Produto, pedido e Builder de pedido.
 
-Notas do autor:
-    *   Valores monetários estão sendo representados por float, mas é sabido que num ambiente
-    real esse não seria o melhor formato.
+Os valores monetários usam ``float`` para manter o exemplo simples. Em um
+sistema real, um tipo decimal seria mais apropriado.
 """
 
 from .app_config import AppConfig
@@ -41,7 +39,7 @@ class Order:
         return sum(product.price for product in self.products)
     
     def __str__(self):
-        """Imprime um valor bonitinho no formato de recibo, eu tive a ideia e o Codex me ajudou a executar"""
+        """Retorna uma representação textual do pedido em formato de recibo."""
         
         width = 45
         name_width = 35
@@ -120,7 +118,7 @@ class OrderBuilder:
         return self
         
     def add_product(self, product: Product):
-        """Adiciona um produto novo na lista de produtos (ou aumenta sua quantidade)"""
+        """Adiciona um produto à lista do pedido em construção."""
         self.products.append(product)
         return self
         

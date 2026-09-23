@@ -49,6 +49,7 @@ class TestOrderBuilder(unittest.TestCase):
             builder.build()
             
     def test_pedido_construido_nao_muda_ao_reutilizar_builder(self):
+        """Teste adicional da questão 7: pedidos não compartilham a lista do Builder."""
         builder = (
             OrderBuilder()
             .set_customer("Luis Bueno")

@@ -30,11 +30,11 @@ Cada arquivo possui um responsável principal. O outro integrante faz a revisão
 ### Isaías
 
 - `src/app_config.py`
-- `src/orders.py`
-- `src/payments.py`
+- `src/order.py`
+- `src/payment.py`
 - `tests/test_app_config.py`
-- `tests/test_orders.py`
-- `tests/test_payments.py`
+- `tests/test_order.py`
+- `tests/test_payment.py`
 - respostas escritas das questões 1, 2, 3 e 8
 - teste adicional de Singleton
 - teste adicional de Builder
@@ -148,8 +148,8 @@ Cada teste deve registrar no relatório:
 - [x] Estrutura inicial do repositório criada.
 - [x] `AppConfig` implementado.
 - [x] Testes obrigatórios de `AppConfig` executados com sucesso.
-- [ ] Respostas escritas da questão 1 registradas em `RESPOSTAS.md`.
-- [ ] Questões 2 a 8 implementadas.
+- [x] Respostas escritas das questões 1 a 8 registradas em `RESPOSTAS.md`.
+- [x] Questões 2 a 8 implementadas.
 
 ## Regra de colaboração
 

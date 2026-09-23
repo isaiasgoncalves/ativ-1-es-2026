@@ -12,9 +12,7 @@ class TestAppConfig(unittest.TestCase):
         AppConfig._instance = None
         
     def test_valores_iniciais(self):
-        """
-        Testando se as configuações padrão são as mesmas estabelecidas no enunciado
-        """
+        """Teste adicional da questão 7: valida o estado inicial do Singleton."""
         
         config = AppConfig()
         
@@ -63,4 +61,3 @@ class TestAppConfig(unittest.TestCase):
         
 if __name__ == "__main__":
     unittest.main()
-    
